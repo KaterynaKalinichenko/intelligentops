@@ -1,0 +1,140 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+__author__ = 'mars'
+import os
+import sys
+import boto3
+import ConfigParser
+import base64
+
+"""
+Usage:
+python aws_ec2_creation.py PATH_TO_AWS_CREDS
+Where:
+  PATH_TO_AWS_CREDS - path to file that contains credentials to AWS console
+
+Requirements:
+pip install -r requirements.txt
+
+Synopsis:
+  - authentication via AWS credentials
+  - verify authentication parameters
+  - createaws service client
+  - create EC2 security group with 22/tcp port opened
+  - create EC2 instance
+"""
+
+usage_msg = '''
+       Usage: python aws_ec2_creation.py PATH_TO_AWS_CREDS
+         Where:
+           PATH_TO_AWS_CREDS - path to file that contains credentials for AWS
+'''
+creds_msg = '''
+       Unable to take AWS credentials from the given file.
+       Please verify, that your credential file contains the following:
+       [AWS_CREDENTIAL_PROFILE]
+       aws_access_key_id=YOUR_ACCESS_KEY_ID
+       aws_secret_access_key=YOUR_SECRET_KEY
+'''
+
+CLOUD_INIT_USERDATA = '''#cloud-config
+repo_update: true
+repo_upgrade: all
+
+runcmd:
+    - yum install -y git
+    - mkdir /var/repodata
+    - git clone https://github.com/AcalephStorage/awesome-devops.git /var/repodata/awesome-devops
+
+output : { all : '| tee -a /var/log/cloud-init-output.log' }
+'''
+
+# DEFAULTS
+AWS_CREDENTIAL_PROFILE = "ec2_manage"
+AWS_REGION = "us-east-2"
+AWS_EC2_INSTANCE_TYPE = "t2.micro"
+AWS_EC2_INSTANCE_COUNT = 1
+AWS_AMI_ID = "ami-0b59bfac6be064b78"
+AWS_EC2_KEY_PAIR = "ec2_deploy"
+
+
+def usage(msg):
+    """ Show usage information """
+    print(msg)
+    sys.exit(1)
+
+
+def create_ec2_client(aws_service, region, access_key, secret_key):
+    """
+    Create a resource service client by name using the default session.
+    :argument aws_service: The name of a service, e.g. 's3' or 'ec2', etc
+    :argument access_key: The access key to use when creating the client.
+    :argument secret_key: The secret key to use when creating the client
+    """
+    try:
+        ec2_client = boto3.resource(aws_service,
+                                    region_name=region,
+                                    aws_access_key_id=access_key,
+                                    aws_secret_access_key=secret_key)
+    except:
+        print("Unable to create service client", sys.exc_info()[0])
+        sys.exit(1)
+    return ec2_client
+
+
+def main(key, secret):
+    """
+    :argument key:  aws_access_key_id
+    :argument secret: aws_secret_access_key
+    """
+    # Creating VPC
+    ec2Client = create_ec2_client(aws_service="ec2", region=AWS_REGION, access_key=key, secret_key=secret)
+
+    # Create sec group
+    sec_group = ec2Client.create_security_group(
+        GroupName='default_sg_ssh_only',
+        Description='Default Sec Group with SSH only')
+    sec_group.authorize_ingress(
+        CidrIp='0.0.0.0/0',
+        IpProtocol='tcp',
+        FromPort=22,
+        ToPort=22
+    )
+    instances = ec2Client.create_instances(
+        ImageId=AWS_AMI_ID,
+        MinCount=AWS_EC2_INSTANCE_COUNT,
+        MaxCount=AWS_EC2_INSTANCE_COUNT,
+        KeyName=AWS_EC2_KEY_PAIR,
+        InstanceType=AWS_EC2_INSTANCE_TYPE,
+        Monitoring={'Enabled': False},
+        SecurityGroupIds=[sec_group.id],
+        UserData=CLOUD_INIT_USERDATA
+    )
+    # Wait until instance will be ready
+    for i in instances:
+        i.wait_until_running()
+
+
+if __name__ == '__main__':
+    # Get credentials from file
+    if not len(sys.argv) > 0:
+        usage(usage_msg)
+
+    # Read credentials from file
+    path_to_creds = sys.argv[1]
+    if not os.path.exists(path_to_creds):
+        print("File with credentials didn't found. Please see usage")
+        usage(usage_msg)
+    else:
+        config = ConfigParser.ConfigParser()
+        config.read(path_to_creds)
+        # setup credentials
+        try:
+            access_key = config.get(AWS_CREDENTIAL_PROFILE, 'aws_access_key_id')
+            secret_key = config.get(AWS_CREDENTIAL_PROFILE, 'aws_secret_access_key')
+            # Process of creation EC2 instance
+            main(access_key, secret_key)
+        except KeyError:
+            usage(creds_msg)
+
+    sys.exit()
