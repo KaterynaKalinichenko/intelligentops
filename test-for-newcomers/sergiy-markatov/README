@@ -1,0 +1,41 @@
+# Install steps
+
+1. Install virtualenv utility
+# RH-forks 
+sudo yum install python2-virtualenv 
+
+# Ubuntu
+apt-get install python3-pip
+sudo pip3 install virtualenv
+
+2.  Create virtual environment via virtualenv
+# Clone sources from git 
+git clone https://.....git process_ec2_creation
+cd process_ec2_creation
+virtualenv --no-site-packages --python=python2 ./venv
+
+3. Activate environment
+. ./venv/bin/activate # or source ./venv/bin/activate
+
+4. Install python requirements in your environment
+pip install -r ./requirements.txt
+
+5. Create or modify your ~/.aws/credentials - simple add a new named profile "ec2_manage"
+# If you have custom name of profile, you should change the variable AWS_CREDENTIAL_PROFILE in the script
+
+# as example
+
+[default]
+aws_access_key_id = AKI...
+aws_secret_access_key = 3Sq6...
+
+[ec2_manage]
+aws_access_key_id = AKI...  
+aws_secret_access_key = xu....
+
+
+6. Create instance ec2
+python ./aws_ec2_creation.py ~/.aws/credentials
+
+
+
