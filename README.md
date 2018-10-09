@@ -12,6 +12,5 @@ If you came here from the job interview - welcome, we've been waiting for you! B
     Please follow this guidance in your work:
     
         - 'at launch' action inside instance must be performed using cloud-init (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/user-data.html)
-        - AMI ID must be supplied to the script as a variable and AMI itself must be labeled as 'Free Tier' in AMI marketplace, so we could use it to validate your results 
+        - AMI ID must be supplied to the script as a parameter and AMI itself must be labeled as 'Free Tier' in AMI marketplace, so we could use it to validate your results 
         - Instnace type must be t3.micro or t2.micro
-
