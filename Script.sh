@@ -30,7 +30,7 @@ echo "mkdir /var/repodata/ && cd /var/repodata/ && git clone https://github.com/
 
 #ConfigureAMZ
 SG_id=$(aws ec2 create-security-group --group-name SG_Test --vpc-id $vpc_id --description "Security group for Test" | awk '{ print $2 }' | sed 's/^.\(.*\).$/\1/')
-aws ec2 authorize-security-group-ingress --group-name SG_Test  --protocol tcp --port 22 --cidr 0.0.0.0/0.
+aws ec2 authorize-security-group-ingress --group-name SG_Test  --protocol tcp --port 22 --cidr 0.0.0.0/0
 aws ec2 create-key-pair --key-name devenv-key --query 'KeyMaterial' --output text > devenv-key.pem
 chmod 400 devenv-key.pem
 aws ec2 run-instances --image-id $image_id --security-group-ids $SG_id --count $instance_count --instance-type $instance_type --key-name devenv-key --user-data file://Temp.sh
