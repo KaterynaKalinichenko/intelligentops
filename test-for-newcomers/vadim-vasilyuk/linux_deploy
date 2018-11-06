@@ -1,0 +1,7 @@
+#!/bin/bash
+REPOPATH='/var/repodata'
+sudo -s
+mdkir -p -m 755 $REPOPATH
+cd $REPOPATH
+git clone https://github.com/AcalephStorage/awesome-devops.git
+rm -rf /var/lib/cloud/* #For the correct running user data
