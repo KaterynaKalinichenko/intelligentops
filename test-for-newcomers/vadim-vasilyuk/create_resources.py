@@ -15,6 +15,8 @@ def arg_parser():
 					metavar="security group identificator", dest='sg_id')
 	parser.add_argument('-subnet_id', action='store', help="input the subnet id",
 					metavar="subnet identificator", dest='subnet_id')
+	parser.add_argument('-kp', action = 'store', help = "input the key pair",
+		metavar = "key pair", dest = 'key_pair')
 	arguments = parser.parse_args()
 	return arguments
 
@@ -25,9 +27,11 @@ def main():
 	linux_image_id = arguments.image_id
 	instance_type = 't2.micro'
 	security_group_id = arguments.sg_id
+	key_pair = arguments.key_pair
 	subnet_id = arguments.subnet_id
 
-	linux_instance = create_linux_instance(linux_image_id, read_file(linux_commands), instance_type, security_group_id, subnet_id)
+	linux_instance = create_linux_instance(linux_image_id, read_file(linux_commands), instance_type, security_group_id,
+											subnet_id, key_pair)
 	wait_until_ok(linux_instance.id)
 
 	resources = {
