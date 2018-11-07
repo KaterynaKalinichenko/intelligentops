@@ -6,7 +6,7 @@ ec2 = boto3.resource('ec2')
 ec2_client = boto3.client('ec2')
 
 
-def create_linux_instance(image_id, user_data, instance_type, security_grpoup_id, subnet_id):
+def create_linux_instance(image_id, user_data, instance_type, security_grpoup_id, subnet_id, key_pair):
 	print('Creating Linux instance... ', end = "")
 	linux_instance = ec2.create_instances(
 		BlockDeviceMappings = [
@@ -23,16 +23,16 @@ def create_linux_instance(image_id, user_data, instance_type, security_grpoup_id
 		ImageId = image_id,
 		InstanceType = instance_type,
 		Ipv6AddressCount = 0,
-		KeyName = 'FreeTier',
+		KeyName = key_pair,
 		MaxCount = 1,
 		MinCount = 1,
 		Monitoring = {
 			'Enabled': False
 		},
 		SecurityGroupIds = [
-			'security_grpoup_id',
+			security_grpoup_id,
 		],
-		SubnetId = 'subnet_id',
+		SubnetId = subnet_id,
 		UserData = user_data,
 		DisableApiTermination = False,
 		DryRun = False,
@@ -48,7 +48,7 @@ def create_linux_instance(image_id, user_data, instance_type, security_grpoup_id
 					},
 					{
 						'Key': 'Name',
-						'Value': 'Free Tier'
+						'Value': 'Free_Tier'
 					}
 				],
 			},
@@ -61,7 +61,7 @@ def create_linux_instance(image_id, user_data, instance_type, security_grpoup_id
 					},
 					{
 						'Key': 'Name',
-						'Value': 'Free Tier'
+						'Value': 'Free_Tier'
 					}
 				],
 			},
@@ -73,6 +73,7 @@ def create_linux_instance(image_id, user_data, instance_type, security_grpoup_id
 
 
 def wait_until_ok(instance_id):
+	print('Wait until instance initialise...', end = "")
 	waiter = ec2_client.get_waiter('instance_status_ok')
 	waiter.wait(
 		InstanceIds = [instance_id],
@@ -81,6 +82,7 @@ def wait_until_ok(instance_id):
 			'MaxAttempts': 50
 		}
 	)
+	print('[OK]')
 
 
 def terminate_instance(instance_id):
