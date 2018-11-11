@@ -1,0 +1,142 @@
+#!/bin/bash -
+
+while true; do
+    read -p "You are going to install Terraform and additional utils (curl/unzip) in case missed ones. Type yes to continue or no to abort.`echo $'\n> '`" yn
+    case $yn in
+        [Yy]* )
+
+curl_cmd=`which curl`
+unzip_cmd=`which unzip`
+
+apt update -y
+
+if [ -z "$curl_cmd" ]; then
+ echo 'Curl installing...' && apt-get install curl -y
+fi
+
+if [ -z "$unzip_cmd" ]; then
+ echo 'Unzip installing...' && apt-get install unzip -y
+fi
+
+TERRAFORM_VERSION="0.11.10"
+INSTALL_DIR="/usr/local/bin"
+DOWNLOAD_DIR="/tmp"
+DOWNLOAD_URL="https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip"
+DOWNLOADED_FILE="$DOWNLOAD_DIR/terraform.zip"
+
+  echo ""
+  echo "Downloading Terraform zip'd binary"
+  curl -o "$DOWNLOADED_FILE" "$DOWNLOAD_URL"
+
+  echo ""
+  echo "Extracting Terraform executable"
+  unzip "$DOWNLOADED_FILE" -d "$INSTALL_DIR"
+
+  rm "$DOWNLOADED_FILE"
+
+break;;
+        [Nn]* ) exit;;
+        * ) echo "Please answer yes or no.";;
+    esac
+done
+
+while true; do
+    read -p "Answer several questions, so you could launch EC2 instance with desired configuration. Type \"yes\" to continue... `echo $'\n> '`" yn
+    case $yn in
+        [Yy]* )
+    terraform init
+break;;
+        [Nn]* )   
+exit;;
+        * ) echo "Please answer yes or no to abort.";;
+    esac
+done    
+
+while true; do
+    read -p "If you want to use default AMI (Ubuntu Server 18.04 LTS) type \"yes\" or \"no\" to specify AMI ID `echo $'\n> '`" yes
+    case $yes in
+         [yes]* )
+break;;
+         [no]* )
+    read -p "Enter AMI ID `echo $'\n> '`" amiID
+    echo amiID=\"$amiID\" >> terraform.tfvars
+break;;
+
+    * ) echo "Please answer yes or no";;
+ esac
+done
+
+while true; do
+    read -p "If you want to use default region (us-east-1) type \"yes\" or \"no\" to specify region ID  `echo $'\n> '`" yes
+    case $yes in
+         [yes]* )
+break;;
+         [no]* )
+    read -p "Enter Region`echo $'\n> '`" region
+    echo region=\"$region\" >> terraform.tfvars
+break;;
+    * ) echo "Please answer yes or no";;
+ esac
+done
+
+while true; do
+    read -p "If you want to use default AWS credentials (located /root/.aws/credentials) type \"yes\" or \"no\" to specify secret/access key `echo $'\n> '`" yes
+    case $yes in
+         [yes]* )
+break;;
+         [no]* )
+    read -p "Enter AWS secret key`echo $'\n> '`" secret_key
+    echo secret_key=\"$secret_key\" >> terraform.tfvars
+
+    read -p "Enter AWS access key`echo $'\n> '`" access_key
+    echo access_key=\"$access_key\" >> terraform.tfvars
+break;;
+     * ) echo "Please answer yes or no";;
+  esac
+done
+
+while true; do
+    read -p "Type \"yes\" to enter existing ssh key name or \"no\" to generate new one`echo $'\n> '`" yes
+    case $yes in
+         [yes]* )
+    read -p "Enter AWS ssh key name`echo $'\n> '`" ssh_key
+    echo ssh_key=\"$ssh_key\" >> terraform.tfvars
+break;;
+         [no]* )
+    ssh-keygen -f aws_key -q -N ""
+    echo ssh_key=\"aws_key\" >> terraform.tfvars
+    echo public_key=\"aws_key.pub\" >> terraform.tfvars
+    echo create_key=\"create\" >> terraform.tfvars
+break;;
+     * ) echo "Please answer yes or no";;
+  esac
+done
+
+echo "****CHECK RESOURCES THAT YOU ARE GOING TO CREATE AND CONFIRM CREATION****"
+terraform plan
+
+while true; do
+    read -p "Confirm instance creation type \"yes\" and \"no\" to abort `echo $'\n> '`" yes
+    case $yes in
+         [yes]* )
+ terraform apply -auto-approve && sleep 60 && rm terraform.tfvars      
+break;;
+         [no]* )
+echo "Thank you."
+break;;
+     * ) echo "Please answer yes or no";;
+  esac
+done
+
+
+
+
+
+
+
+
+
+
+
+
+
