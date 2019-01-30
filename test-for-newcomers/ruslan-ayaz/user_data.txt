@@ -1,8 +1,0 @@
-#cloud-config
-
-bootcmd:
- - mkdir /var/repodata/
- - yum install git -y
- - cd /var/repodata/
- - cd /var/repodata/
- - git clone https://github.com/AcalephStorage/awesome-devops
