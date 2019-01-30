@@ -1,10 +1,7 @@
-#!/bin/bash
 private_key=MyKey1.pem
 public_key=MyKey1
 instance_type=t2.micro
-region="us-west-2"
 
-aws configure set region $region
 
 aws ec2 create-key-pair \
 	--key-name $public_key \
@@ -28,9 +25,9 @@ resultName=$(aws ec2 run-instances \
 	--key-name $public_key \
 	--query "Instances[0].InstanceId")
 
+if [ $? -eq 0 ]; then
 instance_name=$(echo $resultName | tr -d \")
-
-if [ $? -eq 0 ]; then echo "Instance $instance_name has been created." ; fi
+echo "Instance $instance_name has been created." ; fi
 
 resultIP=$(aws ec2 describe-instances \
 	--instance-ids $instance_name \
