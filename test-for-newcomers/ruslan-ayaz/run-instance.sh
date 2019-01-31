@@ -13,7 +13,7 @@ aws ec2 create-key-pair \
 
 if [ $? -eq 0 ]; then echo The SSH cryptographic key pair have been created.; fi
 
-vcp_id=$(aws ec2 create-default-vpc --query 'Vpc.VpcId' | cut -d '"' -f2)
+aws ec2 create-default-vpc --query 'Vpc.VpcId' | cut -d '"' -f2
 
 security_group_id=$(aws ec2 describe-security-groups --query "SecurityGroups[*].{Name:GroupId}" | cut -d '"' -f 4 -s)
 
@@ -28,16 +28,14 @@ resultName=$(aws ec2 run-instances \
 	--key-name $public_key \
 	--query "Instances[0].InstanceId")
 
+if [ $? -eq 0 ]; then
 instance_name=$(echo $resultName | tr -d \")
-
-if [ $? -eq 0 ]; then echo "Instance $instance_name has been created." ; fi
-
+echo "Instance $instance_name has been created." 
 resultIP=$(aws ec2 describe-instances \
 	--instance-ids $instance_name \
 	--query "Reservations[0].Instances[0].PublicIpAddress")
-
 instance_ip=$(echo $resultIP| tr -d \")
-echo IP address is $instance_ip
+echo IP address is $instance_ip ; fi
 
 #Connect to the instance
 #ssh -i MyKey1.pem ec2-user@$instance_ip
