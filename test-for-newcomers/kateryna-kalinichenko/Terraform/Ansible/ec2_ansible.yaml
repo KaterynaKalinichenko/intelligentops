@@ -1,0 +1,30 @@
+- hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    aws_access_key: "{{ lookup('env','AWS_ACCESS_KEY_ID') }}"
+    aws_secret_key: "{{ lookup('env','AWS_SECRET_ACCESS_KEY') }}" 
+    key_pair: "terraform11"
+    test_security_group: "aws_katya-sg"
+    test_ami: "ami-00035f41c82244dab"
+    test_shape: "t2.micro"
+    test_region: "eu-west-1"
+    instance_name: "ec2_run_test"
+
+  tasks:
+  - name: create ec2 instance
+    ec2:
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      image: "{{ test_ami }}"
+      wait: yes
+      instance_type: "{{ test_shape }}"
+      group: "{{ test_security_group }}"
+      region: "{{ test_region }}"
+      key_name: "{{ key_pair }}"
+      count_tag:
+        Name: "{{ instance_name }}"
+      exact_count: 1
+      user_data: "{{lookup('template', 'cloud-init.j2')}}"
+    register: ec2
